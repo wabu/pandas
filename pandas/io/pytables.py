@@ -654,6 +654,9 @@ class HDFStore(StringMixin):
 
         # what we are actually going to do for a chunk
         def func(_start, _stop):
+            if not s.group._v_isopen:
+                s.group = self.get_node(key)
+
             return s.read(where=where, start=_start, stop=_stop,
                           columns=columns, **kwargs)
 
