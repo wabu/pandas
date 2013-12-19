@@ -1275,7 +1275,7 @@ class TimeDeltaBlock(IntBlock):
 
         values = masker(values)
 
-        if isnull(other) or (np.isscalar(other) and other == tslib.iNaT):
+        if lib.isscalar(other) and (isnull(other) or other == tslib.iNaT):
             other = np.nan
         elif isinstance(other, np.timedelta64):
             other = _coerce_scalar_to_timedelta_type(other, unit='s').item()
@@ -1586,7 +1586,7 @@ class DatetimeBlock(Block):
             we are going to compare vs i8, so coerce to integer
             values is always ndarra like, other may not be """
         values = values.view('i8')
-        if isnull(other) or (np.isscalar(other) and other == tslib.iNaT):
+        if lib.isscalar(other) and (isnull(other) or other == tslib.iNaT):
             other = tslib.iNaT
         elif isinstance(other, datetime):
             other = lib.Timestamp(other).asm8.view('i8')
