@@ -985,7 +985,13 @@ class HDFStore(StringMixin):
 
         # append
         for k, v in d.items():
-            dc = data_columns if k == selector else None
+            dc = [c for c in v if c in data_columns]
+            if isinstance(min_itemsize, dict):
+                ms = {c: min_itemsize[c]  for c in v if c in min_itemsize}
+                if 'values' in min_itemsize:
+                    ms['values'] = min_itemsize['values']
+            else:
+                ms = min_itemsize
 
             # compute the val
             val = value.reindex_axis(v, axis=axis)
