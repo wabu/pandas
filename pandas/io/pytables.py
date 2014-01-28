@@ -996,7 +996,7 @@ class HDFStore(StringMixin):
             # compute the val
             val = value.reindex_axis(v, axis=axis)
 
-            self.append(k, val, data_columns=dc, **kwargs)
+            self.append(k, val, min_itemsize=ms, data_columns=dc, **kwargs)
 
     def create_table_index(self, key, **kwargs):
         """ Create a pytables index on the table
