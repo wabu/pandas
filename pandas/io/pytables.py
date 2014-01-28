@@ -910,7 +910,7 @@ class HDFStore(StringMixin):
         self._write_to_group(key, value, append=append, dropna=dropna,
                              **kwargs)
 
-    def append_to_multiple(self, d, value, selector, data_columns=None,
+    def append_to_multiple(self, d, value, selector, data_columns=None, min_itemsize=None,
                            axes=None, dropna=True, **kwargs):
         """
         Append to multiple tables
@@ -987,7 +987,7 @@ class HDFStore(StringMixin):
         for k, v in d.items():
             dc = [c for c in v if c in data_columns]
             if isinstance(min_itemsize, dict):
-                ms = {c: min_itemsize[c]  for c in v if c in min_itemsize}
+                ms = dict((c, min_itemsize[c]) for c in v if c in min_itemsize)
                 if 'values' in min_itemsize:
                     ms['values'] = min_itemsize['values']
             else:
