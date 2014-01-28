@@ -778,6 +778,16 @@ class TestSeries(tm.TestCase, CheckNameIntegration):
         s[:-12] = 5
         self.assert_((s == 0).all())
 
+    def test_setitem_datetime(self):
+        s = Series(date_range('1/1/2001', periods=10))
+        fill = Series(date_range('1/1/2001', periods=3))
+        s[1:4] = fill.reindex([1,2,3])
+
+        expected = Series(date_range('1/1/2001', periods=10))
+        expected[3] = pd.NaT
+
+        assert_almost_equal(s.values, expected.values)
+
     def test_getitem_int64(self):
         idx = np.int64(5)
         self.assertEqual(self.ts[idx], self.ts[5])
@@ -2313,6 +2323,7 @@ class TestSeries(tm.TestCase, CheckNameIntegration):
         # leave as object here
         td = Series([timedelta(days=i) for i in range(3)] + ['foo'])
         self.assert_(td.dtype == 'object')
+        
 
     def test_operators_timedelta64(self):
 
