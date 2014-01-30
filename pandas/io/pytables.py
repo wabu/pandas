@@ -773,6 +773,10 @@ class HDFStore(StringMixin):
         axis = list(set([t.non_index_axes[0][0] for t in tbls]))[0]
 
         def func(_start, _stop):
+            for t, k in zip(tbls, keys):
+                if not t.group._v_isopen:
+                    t.group = self.get_node(k)
+
             if where is not None:
                 c = s.read_coordinates(where=where, start=_start, stop=_stop, **kwargs)
             else:
