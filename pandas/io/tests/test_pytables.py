@@ -208,6 +208,23 @@ class TestHDFStore(tm.TestCase):
             assert_frame_equal(df, result)
 
 
+    def test_string_corruption(self):
+        # GH6505
+        # reading utf8 encoded data, it randomly is corrupted when read back
+
+        with ensure_clean_store(self.path) as store:
+            for i in range(100):
+                strs = [np.random.bytes(20).decode('utf8', errors='ignore') for _ in range(100)]
+                data = DataFrame(strs)
+                store.append('strs', data, min_itemsize=20)
+
+                back = store.select('strs')
+
+                assert_frame_equal(data, back)
+
+                del store['strs']
+
+
     def test_api(self):
 
         # GH4584
