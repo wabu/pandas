@@ -4188,17 +4188,8 @@ def _unconvert_string_array(data, nan_rep=None, encoding=None):
     # where the passed encoding is actually None)
     encoding = _ensure_encoding(encoding)
     if encoding is not None and len(data):
-
-        try:
-            itemsize = lib.max_len_string_array(com._ensure_object(data.ravel()))
-            if compat.PY3:
-                dtype = "U{0}".format(itemsize)
-            else:
-                dtype = "S{0}".format(itemsize)
-            data = data.astype(dtype).astype(object)
-        except (Exception) as e:
-            f = np.vectorize(lambda x: x.decode(encoding), otypes=[np.object])
-            data = f(data)
+        f = np.vectorize(lambda x: x.decode(encoding), otypes=[np.object])
+        data = f(data)
 
     if nan_rep is None:
         nan_rep = 'nan'
