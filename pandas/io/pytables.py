@@ -654,6 +654,9 @@ class HDFStore(StringMixin):
 
         # what we are actually going to do for a chunk
         def func(_start, _stop):
+            if not s.group._v_isopen:
+                s.group = self.get_node(key)
+
             return s.read(where=where, start=_start, stop=_stop,
                           columns=columns, **kwargs)
 
@@ -770,6 +773,10 @@ class HDFStore(StringMixin):
         axis = list(set([t.non_index_axes[0][0] for t in tbls]))[0]
 
         def func(_start, _stop):
+            for t, k in zip(tbls, keys):
+                if not t.group._v_isopen:
+                    t.group = self.get_node(k)
+
             if where is not None:
                 c = s.read_coordinates(where=where, start=_start, stop=_stop, **kwargs)
             else:
@@ -811,6 +818,8 @@ class HDFStore(StringMixin):
         encoding : default None, provide an encoding for strings
         dropna   : boolean, default True, do not write an ALL nan row to
             the store settable by the option 'io.hdf.dropna_table'
+        attrs    : dict, default None
+            Also store each value inside an attribute of the group
         """
         if format is None:
             format = get_option("io.hdf.default_format") or 'fixed'
@@ -893,6 +902,8 @@ class HDFStore(StringMixin):
         encoding     : default None, provide an encoding for strings
         dropna       : boolean, default True, do not write an ALL nan row to
             the store settable by the option 'io.hdf.dropna_table'
+        attrs        : dict, default None
+            Also store each value inside an attribute of the group
         Notes
         -----
         Does *not* check if data being appended overlaps with existing
@@ -927,6 +938,8 @@ class HDFStore(StringMixin):
             use all columns
         dropna : if evaluates to True, drop rows from all tables if any single
                  row in each table has all NaN
+        attrs : dict, default None
+            Also store each value inside an attribute of the group
 
         Notes
         -----
@@ -1224,7 +1237,7 @@ class HDFStore(StringMixin):
             error('_TABLE_MAP')
 
     def _write_to_group(self, key, value, format, index=True, append=False,
-                        complib=None, encoding=None, **kwargs):
+                        complib=None, encoding=None, attrs=None, **kwargs):
         group = self.get_node(key)
 
         # remove the node if we are not appending
@@ -1277,6 +1290,10 @@ class HDFStore(StringMixin):
 
         if s.is_table and index:
             s.create_index(columns=index)
+
+        if attrs:
+            for name,value in attrs.items():
+                s.attrs[name] = value
 
     def _read_group(self, group, **kwargs):
         s = self._create_storer(group)
@@ -4194,17 +4211,8 @@ def _unconvert_string_array(data, nan_rep=None, encoding=None):
     # where the passed encoding is actually None)
     encoding = _ensure_encoding(encoding)
     if encoding is not None and len(data):
-
-        try:
-            itemsize = lib.max_len_string_array(com._ensure_object(data.ravel()))
-            if compat.PY3:
-                dtype = "U{0}".format(itemsize)
-            else:
-                dtype = "S{0}".format(itemsize)
-            data = data.astype(dtype).astype(object)
-        except (Exception) as e:
-            f = np.vectorize(lambda x: x.decode(encoding), otypes=[np.object])
-            data = f(data)
+        f = np.vectorize(lambda x: x.decode(encoding), otypes=[np.object])
+        data = f(data)
 
     if nan_rep is None:
         nan_rep = 'nan'

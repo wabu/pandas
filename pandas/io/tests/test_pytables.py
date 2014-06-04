@@ -208,6 +208,23 @@ class TestHDFStore(tm.TestCase):
             assert_frame_equal(df, result)
 
 
+    def test_string_corruption(self):
+        # GH6505
+        # reading utf8 encoded data, it randomly is corrupted when read back
+
+        with ensure_clean_store(self.path) as store:
+            for i in range(100):
+                strs = [np.random.bytes(20).decode('utf8', errors='ignore') for _ in range(100)]
+                data = DataFrame(strs)
+                store.append('strs', data, min_itemsize=20)
+
+                back = store.select('strs')
+
+                assert_frame_equal(data, back)
+
+                del store['strs']
+
+
     def test_api(self):
 
         # GH4584
@@ -287,6 +304,27 @@ class TestHDFStore(tm.TestCase):
 
             self.assertRaises(TypeError, df.to_hdf, path,'df',append=True,format='foo')
             self.assertRaises(TypeError, df.to_hdf, path,'df',append=False,format='bar')
+
+    def test_api_attrs(self):
+        df = tm.makeDataFrame()
+        attrs = {'val': 42, 
+                 'test': True, 
+                 'meta': dict(name='pandas', what='rocks')}
+
+        with ensure_clean_path(self.path) as path:
+            df.to_hdf(path, 'df', format='t', attrs=attrs)
+            with get_store(path) as st:
+                access = st.get_storer('df').attrs
+                for name, val in attrs.items():
+                    self.assertEqual(access[name], val)
+
+        with ensure_clean_path(self.path) as path:
+            df.to_hdf(path,'df', format='f', attrs=attrs)
+            with get_store(path) as st:
+                access = st.get_storer('df').attrs
+                for name, val in attrs.items():
+                    self.assertEqual(getattr(access, name), val)
+
 
     def test_api_default_format(self):
 
