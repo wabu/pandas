@@ -811,6 +811,8 @@ class HDFStore(StringMixin):
         encoding : default None, provide an encoding for strings
         dropna   : boolean, default True, do not write an ALL nan row to
             the store settable by the option 'io.hdf.dropna_table'
+        attrs    : dict, default None
+            Also store each value inside an attribute of the group
         """
         if format is None:
             format = get_option("io.hdf.default_format") or 'fixed'
@@ -893,6 +895,8 @@ class HDFStore(StringMixin):
         encoding     : default None, provide an encoding for strings
         dropna       : boolean, default True, do not write an ALL nan row to
             the store settable by the option 'io.hdf.dropna_table'
+        attrs        : dict, default None
+            Also store each value inside an attribute of the group
         Notes
         -----
         Does *not* check if data being appended overlaps with existing
@@ -927,6 +931,8 @@ class HDFStore(StringMixin):
             use all columns
         dropna : if evaluates to True, drop rows from all tables if any single
                  row in each table has all NaN
+        attrs : dict, default None
+            Also store each value inside an attribute of the group
 
         Notes
         -----
@@ -1218,7 +1224,7 @@ class HDFStore(StringMixin):
             error('_TABLE_MAP')
 
     def _write_to_group(self, key, value, format, index=True, append=False,
-                        complib=None, encoding=None, **kwargs):
+                        complib=None, encoding=None, attrs=None, **kwargs):
         group = self.get_node(key)
 
         # remove the node if we are not appending
@@ -1271,6 +1277,10 @@ class HDFStore(StringMixin):
 
         if s.is_table and index:
             s.create_index(columns=index)
+
+        if attrs:
+            for name,value in attrs.items():
+                s.attrs[name] = value
 
     def _read_group(self, group, **kwargs):
         s = self._create_storer(group)

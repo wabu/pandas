@@ -288,6 +288,27 @@ class TestHDFStore(tm.TestCase):
             self.assertRaises(TypeError, df.to_hdf, path,'df',append=True,format='foo')
             self.assertRaises(TypeError, df.to_hdf, path,'df',append=False,format='bar')
 
+    def test_api_attrs(self):
+        df = tm.makeDataFrame()
+        attrs = {'val': 42, 
+                 'test': True, 
+                 'meta': dict(name='pandas', what='rocks')}
+
+        with ensure_clean_path(self.path) as path:
+            df.to_hdf(path, 'df', format='t', attrs=attrs)
+            with get_store(path) as st:
+                access = st.get_storer('df').attrs
+                for name, val in attrs.items():
+                    self.assertEqual(access[name], val)
+
+        with ensure_clean_path(self.path) as path:
+            df.to_hdf(path,'df', format='f', attrs=attrs)
+            with get_store(path) as st:
+                access = st.get_storer('df').attrs
+                for name, val in attrs.items():
+                    self.assertEqual(getattr(access, name), val)
+
+
     def test_api_default_format(self):
 
         # default_format option
